@@ -2,6 +2,7 @@ use std::path::Path;
 use std::{
     fs::{File, OpenOptions},
     io,
+    io::{Read, Seek, SeekFrom, Write},
 };
 
 pub const PAGE_SIZE: usize = 4096;
@@ -11,6 +12,10 @@ pub struct PageId(u64);
 impl PageId {
     pub fn next(&self) -> Self {
         Self(self.0 + 1)
+    }
+
+    pub fn offset(&self, page_size: usize) -> u64 {
+        self.0 * page_size as u64
     }
 }
 
@@ -26,6 +31,15 @@ mod PageIdTests {
         fn _1だけ足されたPageIdを返すこと() {
             let page_id = PageId(0).next();
             assert_eq!(page_id, PageId(1));
+        }
+    }
+
+    mod offset {
+        use super::*;
+
+        #[test]
+        fn page_sizeに応じたオフセット位置を返すこと() {
+            assert_eq!(PageId(2).offset(PAGE_SIZE), 8192)
         }
     }
 }
@@ -60,9 +74,17 @@ impl DiskManager {
         page_id
     }
 
-    // pub fn read_page_data(&mut self, page_id: PageId, data: &mut [u8]) -> io::Result<()> {}
+    pub fn write_page_data(&mut self, page_id: PageId, data: &[u8]) -> io::Result<()> {
+        let offset = page_id.offset(PAGE_SIZE);
+        self.heap_file.seek(SeekFrom::Start(offset))?;
+        self.heap_file.write_all(data)
+    }
 
-    // pub fn write_page_data(&mut self, page_id: PageId, data: &[u8]) -> io::Result<()> {}
+    pub fn read_page_data(&mut self, page_id: PageId, data: &mut [u8]) -> io::Result<()> {
+        let offset = page_id.offset(PAGE_SIZE);
+        self.heap_file.seek(SeekFrom::Start(offset))?;
+        self.heap_file.read_exact(data)
+    }
 }
 
 #[cfg(test)]
@@ -72,10 +94,7 @@ mod DiskManagerTests {
 
     mod new {
         use super::*;
-        use std::{
-            fs::{remove_file, OpenOptions},
-            io::{Read, Seek, SeekFrom, Write},
-        };
+        use std::fs::remove_file;
 
         #[test]
         fn DiskManagerが正しく生成されること() {
@@ -106,10 +125,7 @@ mod DiskManagerTests {
 
     mod open {
         use super::*;
-        use std::{
-            fs::{remove_file, OpenOptions},
-            io::{Read, Write},
-        };
+        use std::fs::remove_file;
 
         #[test]
         fn すでに存在するファイルを正しく開けること() {
@@ -140,7 +156,7 @@ mod DiskManagerTests {
 
     mod allocate_page {
         use super::*;
-        use std::{fs::remove_file, io::Write};
+        use std::fs::remove_file;
 
         #[test]
         fn 現在のページIDを返し内部の値はインクリメントされていること() {
@@ -156,6 +172,54 @@ mod DiskManagerTests {
             // Assert
             assert_eq!(page_id, PageId(0));
             assert_eq!(disk.next_page_id, PageId(0).next());
+
+            // Cleanup
+            remove_file(file_path).unwrap();
+        }
+    }
+
+    mod write_page_data {
+        use super::*;
+        use std::fs::remove_file;
+
+        #[test]
+        fn データをファイルに書き込めること() {
+            // Arrange
+            let file_path = "write_page_data_0.txt";
+            let mut disk = DiskManager::open(file_path).unwrap();
+
+            // Act
+            disk.write_page_data(disk.next_page_id, b"Hello, world!")
+                .unwrap();
+            disk.heap_file.seek(SeekFrom::Start(0)).unwrap();
+            let mut content = String::new();
+            disk.heap_file.read_to_string(&mut content).unwrap();
+
+            // Assert
+            assert_eq!(content, "Hello, world!");
+
+            // Cleanup
+            remove_file(file_path).unwrap();
+        }
+    }
+
+    mod read_page_data {
+        use super::*;
+        use std::fs::remove_file;
+
+        #[test]
+        fn データを読み込めること() {
+            // Arrange
+            let file_path = "read_page_data_0.txt";
+            let mut disk = DiskManager::open(file_path).unwrap();
+            disk.heap_file.write_all(b"Hello, world!").unwrap();
+
+            // Act
+            let mut data = vec![0u8; 13];
+            disk.read_page_data(PageId(0), &mut data).unwrap();
+
+            // Assert
+            assert_eq!(data, b"Hello, world!");
 
             // Cleanup
             remove_file(file_path).unwrap();
