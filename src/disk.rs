@@ -1,21 +1,19 @@
-use std::path::Path;
 use std::{
     fs::{File, OpenOptions},
     io,
     io::{Read, Seek, SeekFrom, Write},
+    path::Path,
 };
-
-pub const PAGE_SIZE: usize = 4096;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct PageId(u64);
 impl PageId {
-    pub fn next(&self) -> Self {
-        Self(self.0 + 1)
+    pub fn value(&self) -> u64 {
+        self.0
     }
 
-    pub fn offset(&self, page_size: usize) -> u64 {
-        self.0 * page_size as u64
+    pub fn next(&self) -> Self {
+        Self(self.0 + 1)
     }
 }
 
@@ -23,6 +21,15 @@ impl PageId {
 #[allow(non_snake_case)]
 mod PageIdTests {
     use super::*;
+
+    mod value {
+        use super::*;
+
+        #[test]
+        fn 内部で保持する値を返すこと() {
+            assert_eq!(PageId(0).value(), 0)
+        }
+    }
 
     mod next {
         use super::*;
@@ -33,15 +40,6 @@ mod PageIdTests {
             assert_eq!(page_id, PageId(1));
         }
     }
-
-    mod offset {
-        use super::*;
-
-        #[test]
-        fn page_sizeに応じたオフセット位置を返すこと() {
-            assert_eq!(PageId(2).offset(PAGE_SIZE), 8192)
-        }
-    }
 }
 
 pub struct DiskManager {
@@ -50,9 +48,11 @@ pub struct DiskManager {
 }
 
 impl DiskManager {
+    const PAGE_SIZE: usize = 4096;
+
     pub fn new(heap_file: File) -> io::Result<Self> {
         let heap_file_size = heap_file.metadata()?.len();
-        let next_page_id = PageId(heap_file_size / PAGE_SIZE as u64);
+        let next_page_id = PageId(heap_file_size / Self::PAGE_SIZE as u64);
         Ok(Self {
             heap_file,
             next_page_id,
@@ -75,15 +75,19 @@ impl DiskManager {
     }
 
     pub fn write_page_data(&mut self, page_id: PageId, data: &[u8]) -> io::Result<()> {
-        let offset = page_id.offset(PAGE_SIZE);
+        let offset = Self::calc_offset(page_id);
         self.heap_file.seek(SeekFrom::Start(offset))?;
         self.heap_file.write_all(data)
     }
 
     pub fn read_page_data(&mut self, page_id: PageId, data: &mut [u8]) -> io::Result<()> {
-        let offset = page_id.offset(PAGE_SIZE);
+        let offset = Self::calc_offset(page_id);
         self.heap_file.seek(SeekFrom::Start(offset))?;
         self.heap_file.read_exact(data)
+    }
+
+    fn calc_offset(page_id: PageId) -> u64 {
+        page_id.value() * Self::PAGE_SIZE as u64
     }
 }
 
