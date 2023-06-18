@@ -187,12 +187,14 @@ mod BufferPoolManagerTests {
             let file_path = "BufferPoolManagerTests::fetch_page::0.txt";
             let page_id = PageId(0);
             let data = ['a' as u8; DiskManager::PAGE_SIZE];
-            let mut disk = DiskManager::open(file_path).unwrap();
-            disk.write_page_data(page_id, &data).unwrap();
-            let pool = BufferPool::new(3);
+            let mut buffer_pool_manager = {
+                let mut disk = DiskManager::open(file_path).unwrap();
+                disk.write_page_data(page_id, &data).unwrap();
+                let pool = BufferPool::new(3);
+                BufferPoolManager::new(disk, pool)
+            };
 
             // Act
-            let mut buffer_pool_manager = BufferPoolManager::new(disk, pool);
             let buffer = buffer_pool_manager.fetch_page(page_id).unwrap();
 
             // Assert
@@ -214,16 +216,23 @@ mod BufferPoolManagerTests {
             let page_id = PageId(0);
             let data = ['a' as u8; DiskManager::PAGE_SIZE];
             let buffer_id = BufferId(0);
-            let disk = DiskManager::open(file_path).unwrap();
-            let mut buffer = Buffer::default();
-            buffer.page_id = page_id;
-            buffer.page = data;
-            let mut frame = Frame::default();
-            frame.usage_count = 1;
-            frame.buffer = Rc::new(buffer);
-            let mut pool = BufferPool::new(1);
-            pool.buffers = vec![frame];
-            let mut buffer_pool_manager = BufferPoolManager::new(disk, pool);
+            let mut buffer_pool_manager = {
+                let disk = DiskManager::open(file_path).unwrap();
+                let frame = {
+                    let buffer = Buffer {
+                        page_id,
+                        page: data,
+                        is_dirty: false,
+                    };
+                    Frame {
+                        usage_count: 1,
+                        buffer: Rc::new(buffer),
+                    }
+                };
+                let mut pool = BufferPool::new(1);
+                pool.buffers = vec![frame];
+                BufferPoolManager::new(disk, pool)
+            };
             buffer_pool_manager.page_table.insert(page_id, buffer_id);
 
             // Act
