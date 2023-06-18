@@ -1,6 +1,5 @@
 use crate::disk::{DiskManager, PageId};
 use std::{
-    cell::RefCell,
     collections::HashMap,
     io,
     ops::{Index, IndexMut},
@@ -15,7 +14,7 @@ pub enum Error {
     NoFreeBuffer,
 }
 
-#[derive(Default, Clone, Copy)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct BufferId(usize);
 impl BufferId {
     fn value(&self) -> usize {
@@ -27,7 +26,7 @@ pub type Page = [u8; DiskManager::PAGE_SIZE];
 
 pub struct Buffer {
     pub page_id: PageId,
-    pub page: RefCell<Page>,
+    pub page: Page,
     pub is_dirty: bool,
 }
 
@@ -35,7 +34,7 @@ impl Default for Buffer {
     fn default() -> Self {
         Self {
             page_id: Default::default(),
-            page: RefCell::new([0u8; DiskManager::PAGE_SIZE]),
+            page: [0u8; DiskManager::PAGE_SIZE],
             is_dirty: Default::default(),
         }
     }
@@ -158,17 +157,85 @@ impl BufferPoolManager {
         {
             let buffer = Rc::get_mut(&mut frame.buffer).unwrap();
             if buffer.is_dirty {
-                self.disk
-                    .write_page_data(evict_page_id, buffer.page.get_mut())?;
+                self.disk.write_page_data(evict_page_id, &buffer.page)?;
             }
             buffer.page_id = page_id;
             buffer.is_dirty = false;
-            self.disk.read_page_data(page_id, buffer.page.get_mut())?;
+            self.disk.read_page_data(page_id, &mut buffer.page)?;
             frame.usage_count = 1;
         }
-        let page = Rc::clone(&frame.buffer);
+        let buffer = Rc::clone(&frame.buffer);
         self.page_table.remove(&evict_page_id);
         self.page_table.insert(page_id, buffer_id);
-        Ok(page)
+        Ok(buffer)
+    }
+}
+
+#[cfg(test)]
+#[allow(non_snake_case)]
+mod BufferPoolManagerTests {
+    use super::*;
+
+    mod fetch_page {
+        use super::*;
+        use std::fs::remove_file;
+
+        #[test]
+        fn バッファプールに存在しないページを読み込もうとした場合ディスクから読み込みバッファプールに書き込んだ後ページの内容を返すこと(
+        ) {
+            // Arrange
+            let file_path = "BufferPoolManagerTests::fetch_page::0.txt";
+            let page_id = PageId(0);
+            let data = ['a' as u8; DiskManager::PAGE_SIZE];
+            let mut disk = DiskManager::open(file_path).unwrap();
+            disk.write_page_data(page_id, &data).unwrap();
+            let pool = BufferPool::new(3);
+
+            // Act
+            let mut buffer_pool_manager = BufferPoolManager::new(disk, pool);
+            let buffer = buffer_pool_manager.fetch_page(page_id).unwrap();
+
+            // Assert
+            assert_eq!(buffer.page_id, page_id);
+            assert_eq!(buffer.page, data);
+            assert_eq!(
+                *buffer_pool_manager.page_table.get(&page_id).unwrap(),
+                BufferId(0)
+            );
+
+            // Cleanup
+            remove_file(file_path).unwrap();
+        }
+
+        #[test]
+        fn ページがバッファプールに存在する場合バッファプールの内容を読み込むこと() {
+            // Arrange
+            let file_path = "BufferPoolManagerTests::fetch_page::1.txt";
+            let page_id = PageId(0);
+            let data = ['a' as u8; DiskManager::PAGE_SIZE];
+            let buffer_id = BufferId(0);
+            let disk = DiskManager::open(file_path).unwrap();
+            let mut buffer = Buffer::default();
+            buffer.page_id = page_id;
+            buffer.page = data;
+            let mut frame = Frame::default();
+            frame.usage_count = 1;
+            frame.buffer = Rc::new(buffer);
+            let mut pool = BufferPool::new(1);
+            pool.buffers = vec![frame];
+            let mut buffer_pool_manager = BufferPoolManager::new(disk, pool);
+            buffer_pool_manager.page_table.insert(page_id, buffer_id);
+
+            // Act
+            let buffer = buffer_pool_manager.fetch_page(page_id).unwrap();
+
+            // Assert
+            assert_eq!(buffer.page_id, page_id);
+            assert_eq!(buffer.page, data);
+            assert_eq!(buffer.is_dirty, false);
+
+            // Cleanup
+            remove_file(file_path).unwrap();
+        }
     }
 }

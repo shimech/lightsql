@@ -6,7 +6,7 @@ use std::{
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
-pub struct PageId(u64);
+pub struct PageId(pub u64);
 impl PageId {
     pub fn value(&self) -> u64 {
         self.0
@@ -103,7 +103,7 @@ mod DiskManagerTests {
         #[test]
         fn DiskManagerが正しく生成されること() {
             // Arrange
-            let file_path = "new_0.txt";
+            let file_path = "DiskManagerTests::new::0.txt";
             let mut file = OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -134,7 +134,7 @@ mod DiskManagerTests {
         #[test]
         fn すでに存在するファイルを正しく開けること() {
             // Arrange
-            let file_path = "open_0.txt";
+            let file_path = "DiskManagerTests::open::0.txt";
             let mut file = OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -165,7 +165,7 @@ mod DiskManagerTests {
         #[test]
         fn 現在のページIDを返し内部の値はインクリメントされていること() {
             // Arrange
-            let file_path = "allocate_page_0.txt";
+            let file_path = "DiskManagerTests::allocate_page::0.txt";
             let mut file = File::create(file_path).unwrap();
             file.flush().unwrap();
 
@@ -189,7 +189,7 @@ mod DiskManagerTests {
         #[test]
         fn データをファイルに書き込めること() {
             // Arrange
-            let file_path = "write_page_data_0.txt";
+            let file_path = "DiskManagerTests::write_page_data::0.txt";
             let mut disk = DiskManager::open(file_path).unwrap();
 
             // Act
@@ -212,9 +212,9 @@ mod DiskManagerTests {
         use std::fs::remove_file;
 
         #[test]
-        fn データを読み込めること() {
+        fn ファイルに書き込まれたデータを読み込めること() {
             // Arrange
-            let file_path = "read_page_data_0.txt";
+            let file_path = "DiskManagerTests::read_page_data::0.txt";
             let mut disk = DiskManager::open(file_path).unwrap();
             disk.heap_file.write_all(b"Hello, world!").unwrap();
 
