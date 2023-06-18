@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub struct PageId(u64);
 impl PageId {
     pub fn value(&self) -> u64 {
@@ -48,7 +48,7 @@ pub struct DiskManager {
 }
 
 impl DiskManager {
-    const PAGE_SIZE: usize = 4096;
+    pub const PAGE_SIZE: usize = 4096;
 
     pub fn new(heap_file: File) -> io::Result<Self> {
         let heap_file_size = heap_file.metadata()?.len();
