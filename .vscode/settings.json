@@ -9,6 +9,5 @@
     "editor.tabSize": 2
   },
   "editor.formatOnSave": true,
-  "rust-analyzer.linkedProjects": ["./Cargo.toml"],
-  "rust-analyzer.showUnlinkedFileNotification": false
+  "rust-analyzer.linkedProjects": ["./Cargo.toml"]
 }
