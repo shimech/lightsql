@@ -1,5 +1,8 @@
 use crate::disk::{DiskManager, PageId};
-use std::rc::Rc;
+use std::{
+    ops::{Index, IndexMut},
+    rc::Rc,
+};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct BufferId(pub usize);
@@ -31,4 +34,26 @@ impl Default for Buffer {
 pub struct Frame {
     pub usage_count: u64,
     pub buffer: Rc<Buffer>,
+}
+
+pub struct BufferList(pub Vec<Frame>);
+
+impl BufferList {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl Index<BufferId> for BufferList {
+    type Output = Frame;
+
+    fn index(&self, buffer_id: BufferId) -> &Self::Output {
+        &self.0[buffer_id.value()]
+    }
+}
+
+impl IndexMut<BufferId> for BufferList {
+    fn index_mut(&mut self, buffer_id: BufferId) -> &mut Self::Output {
+        &mut self.0[buffer_id.value()]
+    }
 }

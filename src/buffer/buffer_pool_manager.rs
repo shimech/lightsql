@@ -54,7 +54,7 @@ mod BufferPoolManagerTests {
 
     mod fetch_page {
         use super::*;
-        use crate::buffer::core::Frame;
+        use crate::buffer::core::{BufferList, Frame};
         use std::fs::remove_file;
 
         #[test]
@@ -107,7 +107,7 @@ mod BufferPoolManagerTests {
                     }
                 };
                 let mut pool = BufferPool::new(1);
-                pool.buffers = vec![frame];
+                pool.buffers = BufferList(vec![frame]);
                 BufferPoolManager::new(disk, pool)
             };
             buffer_pool_manager.page_table.insert(page_id, buffer_id);

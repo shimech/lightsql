@@ -1,12 +1,13 @@
-use super::core::{BufferId, Frame};
-use std::{
-    ops::{Index, IndexMut},
-    rc::Rc,
+use super::{
+    core::{BufferId, BufferList, Frame},
+    evict_strategy::{ClockSweepStrategy, EvictStrategy},
 };
+use std::ops::{Index, IndexMut};
 
 pub struct BufferPool {
-    pub buffers: Vec<Frame>,
+    pub buffers: BufferList,
     pub next_victim_id: BufferId,
+    evict_strategy: Box<dyn EvictStrategy>,
 }
 
 impl BufferPool {
@@ -14,8 +15,9 @@ impl BufferPool {
         let mut buffers = vec![];
         buffers.resize_with(pool_size, Frame::default);
         Self {
-            buffers,
+            buffers: BufferList(buffers),
             next_victim_id: BufferId::default(),
+            evict_strategy: Box::new(ClockSweepStrategy),
         }
     }
 
@@ -24,31 +26,8 @@ impl BufferPool {
     }
 
     pub fn evict(&mut self) -> Option<BufferId> {
-        let pool_size = self.size();
-        let mut consecutive_pinned = 0;
-
-        let victim_id = loop {
-            let next_victim_id = self.next_victim_id;
-            let frame = &mut self[next_victim_id];
-            if frame.usage_count == 0 {
-                break self.next_victim_id;
-            }
-            if Rc::get_mut(&mut frame.buffer).is_some() {
-                frame.usage_count -= 1;
-                consecutive_pinned = 0;
-            } else {
-                consecutive_pinned += 1;
-                if consecutive_pinned >= pool_size {
-                    return None;
-                }
-            }
-            self.update_next_victim_id();
-        };
-        Some(victim_id)
-    }
-
-    fn update_next_victim_id(&mut self) -> () {
-        self.next_victim_id = BufferId((self.next_victim_id.value() + 1) % self.size())
+        self.evict_strategy
+            .evict(self.size(), self.next_victim_id, &mut self.buffers)
     }
 }
 
@@ -56,13 +35,13 @@ impl Index<BufferId> for BufferPool {
     type Output = Frame;
 
     fn index(&self, buffer_id: BufferId) -> &Self::Output {
-        &self.buffers[buffer_id.value()]
+        &self.buffers[buffer_id]
     }
 }
 
 impl IndexMut<BufferId> for BufferPool {
     fn index_mut(&mut self, buffer_id: BufferId) -> &mut Self::Output {
-        &mut self.buffers[buffer_id.value()]
+        &mut self.buffers[buffer_id]
     }
 }
 
