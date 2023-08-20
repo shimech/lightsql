@@ -18,8 +18,7 @@ impl PageId {
 }
 
 #[cfg(test)]
-#[allow(non_snake_case)]
-mod PageIdTests {
+mod page_id_test {
     use super::*;
 
     mod value {
@@ -34,6 +33,7 @@ mod PageIdTests {
     mod next {
         use super::*;
 
+        #[allow(non_snake_case)]
         #[test]
         fn _1だけ足されたPageIdを返すこと() {
             let page_id = PageId(0).next();
@@ -92,14 +92,14 @@ impl DiskManager {
 }
 
 #[cfg(test)]
-#[allow(non_snake_case)]
-mod DiskManagerTests {
+mod disk_manager_test {
     use super::*;
 
     mod new {
         use super::*;
         use std::fs::remove_file;
 
+        #[allow(non_snake_case)]
         #[test]
         fn DiskManagerが正しく生成されること() {
             // Arrange
@@ -162,6 +162,7 @@ mod DiskManagerTests {
         use super::*;
         use std::fs::remove_file;
 
+        #[allow(non_snake_case)]
         #[test]
         fn 現在のページIDを返し内部の値はインクリメントされていること() {
             // Arrange
