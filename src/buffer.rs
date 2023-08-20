@@ -182,7 +182,7 @@ mod buffer_pool_manager_test {
         fn バッファプールに存在しないページを読み込もうとした場合ディスクから読み込みバッファプールに書き込んだ後ページの内容を返すこと(
         ) {
             // Arrange
-            let file_path = "BufferPoolManagerTests::fetch_page::0.txt";
+            let file_path = "buffer_pool_manager_test::fetch_page::0.txt";
             let page_id = PageId(0);
             let data = ['a' as u8; DiskManager::PAGE_SIZE];
             let mut buffer_pool_manager = {
@@ -210,7 +210,7 @@ mod buffer_pool_manager_test {
         #[test]
         fn ページがバッファプールに存在する場合バッファプールの内容を読み込むこと() {
             // Arrange
-            let file_path = "BufferPoolManagerTests::fetch_page::1.txt";
+            let file_path = "buffer_pool_manager_test::fetch_page::1.txt";
             let page_id = PageId(0);
             let data = ['a' as u8; DiskManager::PAGE_SIZE];
             let buffer_id = BufferId(0);

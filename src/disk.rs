@@ -103,7 +103,7 @@ mod disk_manager_test {
         #[test]
         fn DiskManagerが正しく生成されること() {
             // Arrange
-            let file_path = "DiskManagerTests::new::0.txt";
+            let file_path = "disk_manager_test::new::0.txt";
             let mut file = OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -134,7 +134,7 @@ mod disk_manager_test {
         #[test]
         fn すでに存在するファイルを正しく開けること() {
             // Arrange
-            let file_path = "DiskManagerTests::open::0.txt";
+            let file_path = "disk_manager_test::open::0.txt";
             let mut file = OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -166,7 +166,7 @@ mod disk_manager_test {
         #[test]
         fn 現在のページIDを返し内部の値はインクリメントされていること() {
             // Arrange
-            let file_path = "DiskManagerTests::allocate_page::0.txt";
+            let file_path = "disk_manager_test::allocate_page::0.txt";
             let mut file = File::create(file_path).unwrap();
             file.flush().unwrap();
 
@@ -190,7 +190,7 @@ mod disk_manager_test {
         #[test]
         fn データをファイルに書き込めること() {
             // Arrange
-            let file_path = "DiskManagerTests::write_page_data::0.txt";
+            let file_path = "disk_manager_test::write_page_data::0.txt";
             let mut disk = DiskManager::open(file_path).unwrap();
 
             // Act
@@ -215,7 +215,7 @@ mod disk_manager_test {
         #[test]
         fn ファイルに書き込まれたデータを読み込めること() {
             // Arrange
-            let file_path = "DiskManagerTests::read_page_data::0.txt";
+            let file_path = "disk_manager_test::read_page_data::0.txt";
             let mut disk = DiskManager::open(file_path).unwrap();
             disk.heap_file.write_all(b"Hello, world!").unwrap();
 
