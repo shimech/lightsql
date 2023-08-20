@@ -109,8 +109,7 @@ impl IndexMut<BufferId> for BufferPool {
 }
 
 #[cfg(test)]
-#[allow(non_snake_case)]
-mod BufferPoolTests {
+mod buffer_pool_test {
     use super::*;
 
     mod new {
@@ -172,8 +171,7 @@ impl BufferPoolManager {
 }
 
 #[cfg(test)]
-#[allow(non_snake_case)]
-mod BufferPoolManagerTests {
+mod buffer_pool_manager_test {
     use super::*;
 
     mod fetch_page {
