@@ -4,16 +4,47 @@ use std::{
     io::{Read, Seek, SeekFrom, Write},
     path::Path,
 };
+use zerocopy::{AsBytes, FromBytes, FromZeroes};
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, FromBytes, FromZeroes, AsBytes)]
+#[repr(C)]
 pub struct PageId(pub u64);
 impl PageId {
+    pub const INVALID_PAGE_ID: PageId = PageId(u64::MAX);
+
     pub fn value(&self) -> u64 {
         self.0
     }
 
     pub fn next(&self) -> Self {
         Self(self.0 + 1)
+    }
+
+    pub fn valid(self) -> Option<Self> {
+        if self == Self::INVALID_PAGE_ID {
+            None
+        } else {
+            Some(self)
+        }
+    }
+}
+
+impl Default for PageId {
+    fn default() -> Self {
+        Self::INVALID_PAGE_ID
+    }
+}
+
+impl From<Option<PageId>> for PageId {
+    fn from(page_id: Option<PageId>) -> Self {
+        page_id.unwrap_or_default()
+    }
+}
+
+impl From<&[u8]> for PageId {
+    fn from(bytes: &[u8]) -> Self {
+        let arr = bytes.try_into().unwrap();
+        PageId(u64::from_ne_bytes(arr))
     }
 }
 
