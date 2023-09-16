@@ -1,5 +1,5 @@
 use crate::{disk::PageId, slotted::Slotted};
-use zerocopy::LayoutVerified;
+use zerocopy::Ref;
 
 pub struct Header {
     prev_page_id: PageId,
@@ -7,6 +7,6 @@ pub struct Header {
 }
 
 pub struct Leaf<B> {
-    header: LayoutVerified<B, Header>,
+    header: Ref<B, Header>,
     body: Slotted<B>,
 }

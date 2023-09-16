@@ -2,9 +2,9 @@ use std::{
     mem::size_of,
     ops::{Index, IndexMut, Range},
 };
-use zerocopy::{AsBytes, ByteSlice, ByteSliceMut, FromBytes, LayoutVerified};
+use zerocopy::{AsBytes, ByteSlice, ByteSliceMut, FromBytes, FromZeroes, Ref};
 
-#[derive(FromBytes, AsBytes)]
+#[derive(FromBytes, AsBytes, FromZeroes)]
 #[repr(C)]
 pub struct Header {
     slot_count: u16,
@@ -12,7 +12,7 @@ pub struct Header {
     _pad: u32,
 }
 
-#[derive(FromBytes, AsBytes, Copy, Clone)]
+#[derive(FromBytes, AsBytes, FromZeroes, Copy, Clone)]
 #[repr(C)]
 pub struct Pointer {
     offset: u16,
@@ -27,17 +27,16 @@ impl Pointer {
     }
 }
 
-pub type Pointers<B> = LayoutVerified<B, [Pointer]>;
+pub type Pointers<B> = Ref<B, [Pointer]>;
 
 pub struct Slotted<B> {
-    header: LayoutVerified<B, Header>,
+    header: Ref<B, Header>,
     body: B,
 }
 
 impl<B: ByteSlice> Slotted<B> {
     pub fn new(bytes: B) -> Self {
-        let (header, body) =
-            LayoutVerified::new_from_prefix(bytes).expect("slotted header must be aligned");
+        let (header, body) = Ref::new_from_prefix(bytes).expect("slotted header must be aligned");
         Self { header, body }
     }
 
