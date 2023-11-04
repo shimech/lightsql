@@ -44,11 +44,6 @@ impl<B: ByteSlice> Leaf<B> {
         })
     }
 
-    pub fn search_pair(&self, key: &[u8]) -> Option<Pair> {
-        let slot_id = self.search_slot_id(key).ok()?;
-        Some(self.pair_at(slot_id))
-    }
-
     pub fn pair_at(&self, slot_id: usize) -> Pair {
         Pair::from_bytes(&self.body[slot_id])
     }

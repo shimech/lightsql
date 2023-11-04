@@ -1,5 +1,6 @@
 use crate::disk::{DiskManager, PageId};
 use std::{
+    cell::{Cell, RefCell},
     collections::HashMap,
     io,
     ops::{Index, IndexMut},
@@ -24,18 +25,19 @@ impl BufferId {
 
 pub type Page = [u8; DiskManager::PAGE_SIZE];
 
+#[derive(Debug)]
 pub struct Buffer {
     pub page_id: PageId,
-    pub page: Page,
-    pub is_dirty: bool,
+    pub page: RefCell<Page>,
+    pub is_dirty: Cell<bool>,
 }
 
 impl Default for Buffer {
     fn default() -> Self {
         Self {
             page_id: Default::default(),
-            page: [0u8; DiskManager::PAGE_SIZE],
-            is_dirty: Default::default(),
+            page: RefCell::new([0u8; DiskManager::PAGE_SIZE]),
+            is_dirty: Cell::new(false),
         }
     }
 }
@@ -155,18 +157,52 @@ impl BufferPoolManager {
         let evict_page_id = frame.buffer.page_id;
         {
             let buffer = Rc::get_mut(&mut frame.buffer).unwrap();
-            if buffer.is_dirty {
-                self.disk.write_page_data(evict_page_id, &buffer.page)?;
+            if buffer.is_dirty.get() {
+                self.disk
+                    .write_page_data(evict_page_id, buffer.page.get_mut())?;
             }
             buffer.page_id = page_id;
-            buffer.is_dirty = false;
-            self.disk.read_page_data(page_id, &mut buffer.page)?;
+            buffer.is_dirty.set(false);
+            self.disk.read_page_data(page_id, buffer.page.get_mut())?;
             frame.usage_count = 1;
         }
         let buffer = Rc::clone(&frame.buffer);
         self.page_table.remove(&evict_page_id);
         self.page_table.insert(page_id, buffer_id);
         Ok(buffer)
+    }
+
+    pub fn create_page(&mut self) -> Result<Rc<Buffer>, Error> {
+        let buffer_id = self.pool.evict().ok_or(Error::NoFreeBuffer)?;
+        let frame = &mut self.pool[buffer_id];
+        let evict_page_id = frame.buffer.page_id;
+        let page_id = {
+            let buffer = Rc::get_mut(&mut frame.buffer).unwrap();
+            if buffer.is_dirty.get() {
+                self.disk
+                    .write_page_data(evict_page_id, buffer.page.get_mut())?;
+            }
+            let page_id = self.disk.allocate_page();
+            *buffer = Buffer::default();
+            buffer.is_dirty.set(true);
+            frame.usage_count += 1;
+            page_id
+        };
+        let page = Rc::clone(&frame.buffer);
+        self.page_table.remove(&evict_page_id);
+        self.page_table.insert(page_id, buffer_id);
+        Ok(page)
+    }
+
+    pub fn flush(&mut self) -> Result<(), Error> {
+        for (&page_id, &buffer_id) in self.page_table.iter() {
+            let frame = &self.pool[buffer_id];
+            let mut page = frame.buffer.page.borrow_mut();
+            self.disk.write_page_data(page_id, page.as_mut())?;
+            frame.buffer.is_dirty.set(false);
+        }
+        self.disk.sync()?;
+        Ok(())
     }
 }
 
@@ -197,7 +233,7 @@ mod buffer_pool_manager_test {
 
             // Assert
             assert_eq!(buffer.page_id, page_id);
-            assert_eq!(buffer.page, data);
+            assert_eq!(buffer.page, RefCell::new(data));
             assert_eq!(
                 *buffer_pool_manager.page_table.get(&page_id).unwrap(),
                 BufferId(0)
@@ -219,8 +255,8 @@ mod buffer_pool_manager_test {
                 let frame = {
                     let buffer = Buffer {
                         page_id,
-                        page: data,
-                        is_dirty: false,
+                        page: RefCell::new(data),
+                        is_dirty: Cell::new(false),
                     };
                     Frame {
                         usage_count: 1,
@@ -238,8 +274,8 @@ mod buffer_pool_manager_test {
 
             // Assert
             assert_eq!(buffer.page_id, page_id);
-            assert_eq!(buffer.page, data);
-            assert_eq!(buffer.is_dirty, false);
+            assert_eq!(buffer.page, RefCell::new(data));
+            assert_eq!(buffer.is_dirty.get(), false);
 
             // Cleanup
             remove_file(file_path).unwrap();

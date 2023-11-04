@@ -117,6 +117,11 @@ impl DiskManager {
         self.heap_file.read_exact(data)
     }
 
+    pub fn sync(&mut self) -> io::Result<()> {
+        self.heap_file.flush()?;
+        self.heap_file.sync_all()
+    }
+
     fn calc_offset(page_id: PageId) -> u64 {
         page_id.value() * Self::PAGE_SIZE as u64
     }
