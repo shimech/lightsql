@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     let pool = BufferPool::new(10);
     let mut bufmgr = BufferPoolManager::new(disk, pool);
 
-    let btree = BTree::new(PageId(0));
+    let btree = BTree::new(PageId::new(0));
     let mut search_key = vec![];
     tuple::encode([b"y"].iter(), &mut search_key);
     let mut iter = btree.search(&mut bufmgr, SearchMode::Key(search_key))?;

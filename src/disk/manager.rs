@@ -15,7 +15,7 @@ impl DiskManager {
 
     pub fn new(heap_file: File) -> io::Result<Self> {
         let heap_file_size = heap_file.metadata()?.len();
-        let next_page_id = PageId(heap_file_size / Self::PAGE_SIZE as u64);
+        let next_page_id = PageId::new(heap_file_size / Self::PAGE_SIZE as u64);
         Ok(Self {
             heap_file,
             next_page_id,
@@ -88,7 +88,7 @@ mod disk_manager_test {
 
             // Assert
             assert_eq!(content, "Hello, world!");
-            assert_eq!(disk.next_page_id, PageId(0));
+            assert_eq!(disk.next_page_id, PageId::new(0));
 
             // Cleanup
             remove_file(file_path).unwrap();
@@ -119,7 +119,7 @@ mod disk_manager_test {
 
             // Assert
             assert_eq!(content, "Hello, world!");
-            assert_eq!(disk.next_page_id, PageId(0));
+            assert_eq!(disk.next_page_id, PageId::new(0));
 
             // Cleanup
             remove_file(file_path).unwrap();
@@ -143,8 +143,8 @@ mod disk_manager_test {
             let page_id = disk.allocate_page();
 
             // Assert
-            assert_eq!(page_id, PageId(0));
-            assert_eq!(disk.next_page_id, PageId(0).next());
+            assert_eq!(page_id, PageId::new(0));
+            assert_eq!(disk.next_page_id, PageId::new(0).next());
 
             // Cleanup
             remove_file(file_path).unwrap();
@@ -189,7 +189,7 @@ mod disk_manager_test {
 
             // Act
             let mut data = vec![0u8; 13];
-            disk.read_page_data(PageId(0), &mut data).unwrap();
+            disk.read_page_data(PageId::new(0), &mut data).unwrap();
 
             // Assert
             assert_eq!(data, b"Hello, world!");

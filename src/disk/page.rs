@@ -2,9 +2,13 @@ use zerocopy::{AsBytes, FromBytes, FromZeroes};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, FromBytes, FromZeroes, AsBytes)]
 #[repr(C)]
-pub struct PageId(pub u64);
+pub struct PageId(u64);
 impl PageId {
     pub const INVALID_PAGE_ID: PageId = PageId(u64::MAX);
+
+    pub fn new(value: u64) -> Self {
+        PageId(value)
+    }
 
     pub fn value(&self) -> u64 {
         self.0
@@ -46,6 +50,16 @@ impl From<&[u8]> for PageId {
 mod page_id_test {
     use super::*;
 
+    mod new {
+        use super::*;
+
+        #[allow(non_snake_case)]
+        #[test]
+        fn PageIdが正しく生成されること() {
+            assert_eq!(PageId::new(0), PageId(0))
+        }
+    }
+
     mod value {
         use super::*;
 
@@ -63,6 +77,22 @@ mod page_id_test {
         fn _1だけ足されたPageIdを返すこと() {
             let page_id = PageId(0).next();
             assert_eq!(page_id, PageId(1));
+        }
+    }
+
+    mod valid {
+        use super::*;
+
+        #[allow(non_snake_case)]
+        #[test]
+        fn 有効なページIDを保持している場合Someを返すこと() {
+            assert_eq!(PageId(0).valid(), Some(PageId(0)))
+        }
+
+        #[allow(non_snake_case)]
+        #[test]
+        fn 無効なページIDを保持している場合Noneを返すこと() {
+            assert_eq!(PageId::INVALID_PAGE_ID.valid(), None)
         }
     }
 }

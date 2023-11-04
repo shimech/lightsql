@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     let mut bufmgr = BufferPoolManager::new(disk, pool);
 
     let mut table = SimpleTable {
-        meta_page_id: PageId(0),
+        meta_page_id: PageId::new(0),
         key_elems_count: 1,
     };
     table.create(&mut bufmgr)?;
