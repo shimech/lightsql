@@ -184,6 +184,7 @@ impl BufferPoolManager {
             }
             let page_id = self.disk.allocate_page();
             *buffer = Buffer::default();
+            buffer.page_id = page_id;
             buffer.is_dirty.set(true);
             frame.usage_count += 1;
             page_id
