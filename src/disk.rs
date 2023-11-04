@@ -4,16 +4,47 @@ use std::{
     io::{Read, Seek, SeekFrom, Write},
     path::Path,
 };
+use zerocopy::{AsBytes, FromBytes, FromZeroes};
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, FromBytes, FromZeroes, AsBytes)]
+#[repr(C)]
 pub struct PageId(pub u64);
 impl PageId {
+    pub const INVALID_PAGE_ID: PageId = PageId(u64::MAX);
+
     pub fn value(&self) -> u64 {
         self.0
     }
 
     pub fn next(&self) -> Self {
         Self(self.0 + 1)
+    }
+
+    pub fn valid(self) -> Option<Self> {
+        if self == Self::INVALID_PAGE_ID {
+            None
+        } else {
+            Some(self)
+        }
+    }
+}
+
+impl Default for PageId {
+    fn default() -> Self {
+        Self::INVALID_PAGE_ID
+    }
+}
+
+impl From<Option<PageId>> for PageId {
+    fn from(page_id: Option<PageId>) -> Self {
+        page_id.unwrap_or_default()
+    }
+}
+
+impl From<&[u8]> for PageId {
+    fn from(bytes: &[u8]) -> Self {
+        let arr = bytes.try_into().unwrap();
+        PageId(u64::from_ne_bytes(arr))
     }
 }
 
@@ -86,6 +117,11 @@ impl DiskManager {
         self.heap_file.read_exact(data)
     }
 
+    pub fn sync(&mut self) -> io::Result<()> {
+        self.heap_file.flush()?;
+        self.heap_file.sync_all()
+    }
+
     fn calc_offset(page_id: PageId) -> u64 {
         page_id.value() * Self::PAGE_SIZE as u64
     }
@@ -103,7 +139,7 @@ mod disk_manager_test {
         #[test]
         fn DiskManagerが正しく生成されること() {
             // Arrange
-            let file_path = "DiskManagerTests::new::0.txt";
+            let file_path = "disk_manager_test::new::0.txt";
             let mut file = OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -134,7 +170,7 @@ mod disk_manager_test {
         #[test]
         fn すでに存在するファイルを正しく開けること() {
             // Arrange
-            let file_path = "DiskManagerTests::open::0.txt";
+            let file_path = "disk_manager_test::open::0.txt";
             let mut file = OpenOptions::new()
                 .read(true)
                 .write(true)
@@ -166,7 +202,7 @@ mod disk_manager_test {
         #[test]
         fn 現在のページIDを返し内部の値はインクリメントされていること() {
             // Arrange
-            let file_path = "DiskManagerTests::allocate_page::0.txt";
+            let file_path = "disk_manager_test::allocate_page::0.txt";
             let mut file = File::create(file_path).unwrap();
             file.flush().unwrap();
 
@@ -190,7 +226,7 @@ mod disk_manager_test {
         #[test]
         fn データをファイルに書き込めること() {
             // Arrange
-            let file_path = "DiskManagerTests::write_page_data::0.txt";
+            let file_path = "disk_manager_test::write_page_data::0.txt";
             let mut disk = DiskManager::open(file_path).unwrap();
 
             // Act
@@ -215,7 +251,7 @@ mod disk_manager_test {
         #[test]
         fn ファイルに書き込まれたデータを読み込めること() {
             // Arrange
-            let file_path = "DiskManagerTests::read_page_data::0.txt";
+            let file_path = "disk_manager_test::read_page_data::0.txt";
             let mut disk = DiskManager::open(file_path).unwrap();
             disk.heap_file.write_all(b"Hello, world!").unwrap();
 
