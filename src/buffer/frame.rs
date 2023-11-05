@@ -8,6 +8,10 @@ pub struct Frame {
 }
 
 impl Frame {
+    pub(crate) fn reset_usage_count(&mut self) {
+        self.usage_count = 0
+    }
+
     pub(crate) fn use_buffer(&mut self) -> Rc<Buffer> {
         self.usage_count += 1;
         self.buffer.clone()
@@ -21,6 +25,25 @@ impl Frame {
 #[cfg(test)]
 mod frame_test {
     use super::*;
+
+    mod reset_usage_count {
+        use super::*;
+
+        #[test]
+        fn usage_countが0になること() {
+            // Arrange
+            let mut frame = Frame {
+                usage_count: 3,
+                buffer: Rc::new(Buffer::default()),
+            };
+
+            // Act
+            frame.reset_usage_count();
+
+            // Assert
+            assert_eq!(frame.usage_count, 0);
+        }
+    }
 
     mod use_buffer {
         use super::*;

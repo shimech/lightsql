@@ -35,7 +35,7 @@ impl BufferPoolManager {
             buffer.page_id = page_id;
             buffer.is_dirty.set(false);
             self.disk.read_page_data(page_id, buffer.page.get_mut())?;
-            frame.usage_count = 1;
+            frame.reset_usage_count();
         }
         let buffer = Rc::clone(&frame.buffer);
         self.page_table.remove(&evict_page_id);
