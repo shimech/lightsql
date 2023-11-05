@@ -39,7 +39,7 @@ mod buffer_id_test {
 
 pub type Page = [u8; DiskManager::PAGE_SIZE];
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Buffer {
     pub page_id: PageId,
     pub page: RefCell<Page>,

@@ -22,6 +22,26 @@ impl Frame {
 mod frame_test {
     use super::*;
 
+    mod use_buffer {
+        use super::*;
+
+        #[test]
+        fn カウントを1だけ加算しバッファのクローンを返すこと() {
+            // Arrange
+            let mut frame = Frame {
+                usage_count: 0,
+                buffer: Rc::new(Buffer::default()),
+            };
+
+            // Act
+            let buffer = frame.use_buffer();
+
+            // Assert
+            assert_eq!(frame.usage_count, 1);
+            assert_eq!(buffer, frame.buffer);
+        }
+    }
+
     mod has_reference {
         use super::*;
 
@@ -38,7 +58,7 @@ mod frame_test {
             let actual = frame.has_reference();
 
             // Assert
-            assert_eq!(actual, true)
+            assert_eq!(actual, true);
         }
 
         #[test]
@@ -53,7 +73,7 @@ mod frame_test {
             let actual = frame.has_reference();
 
             // Assert
-            assert_eq!(actual, false)
+            assert_eq!(actual, false);
         }
     }
 }
