@@ -113,7 +113,7 @@ mod buffer_pool_manager_test {
             assert_eq!(buffer.page, RefCell::new(data));
             assert_eq!(
                 *buffer_pool_manager.page_table.get(&page_id).unwrap(),
-                BufferId(0)
+                BufferId::new(0)
             );
 
             // Cleanup
@@ -126,7 +126,7 @@ mod buffer_pool_manager_test {
             let file_path = "buffer_pool_manager_test::fetch_page::1.txt";
             let page_id = PageId::new(0);
             let data = ['a' as u8; DiskManager::PAGE_SIZE];
-            let buffer_id = BufferId(0);
+            let buffer_id = BufferId::new(0);
             let mut buffer_pool_manager = {
                 let disk = DiskManager::open(file_path).unwrap();
                 let frame = {

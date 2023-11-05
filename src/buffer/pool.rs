@@ -48,7 +48,7 @@ impl BufferPool {
     }
 
     fn update_next_victim_id(&mut self) -> () {
-        self.next_victim_id = BufferId((self.next_victim_id.value() + 1) % self.size())
+        self.next_victim_id = BufferId::new((self.next_victim_id.value() + 1) % self.size())
     }
 }
 

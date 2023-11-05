@@ -7,7 +7,7 @@ impl PageId {
     pub const INVALID_PAGE_ID: PageId = PageId(u64::MAX);
 
     pub fn new(value: u64) -> Self {
-        PageId(value)
+        Self(value)
     }
 
     pub fn value(&self) -> u64 {
