@@ -87,4 +87,53 @@ mod clock_sweep_buffer_pool_test {
             assert_eq!(pool.buffers.len(), pool_size)
         }
     }
+
+    mod evict {
+        use super::*;
+
+        #[allow(non_snake_case)]
+        #[test]
+        fn next_victim_idが参照されていない場合そのIDを返すこと() {
+            // Arrange
+            let mut pool = ClockSweepBufferPool::from(2);
+
+            // Act
+            let victim_id = pool.evict().unwrap();
+
+            // Assert
+            assert_eq!(victim_id, BufferId::default());
+        }
+
+        #[allow(non_snake_case)]
+        #[test]
+        fn next_victim_idが参照されている場合その次のIDを返すこと() {
+            // Arrange
+            let mut pool = ClockSweepBufferPool::from(2);
+            let frame = &mut pool[BufferId::new(0)];
+            let _buffer = frame.use_buffer();
+
+            // Act
+            let victim_id = pool.evict().unwrap();
+
+            // Assert
+            assert_eq!(victim_id, BufferId::new(1));
+        }
+
+        #[allow(non_snake_case)]
+        #[test]
+        fn すべてのFrameが参照されている場合Noneを返すこと() {
+            // Arrange
+            let mut pool = ClockSweepBufferPool::from(2);
+            let frame = &mut pool[BufferId::new(0)];
+            let _buffer = frame.use_buffer();
+            let frame = &mut pool[BufferId::new(1)];
+            let _buffer = frame.use_buffer();
+
+            // Act
+            let victim_id = pool.evict();
+
+            // Assert
+            assert_eq!(victim_id, None);
+        }
+    }
 }
