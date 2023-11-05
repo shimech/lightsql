@@ -1,14 +1,14 @@
 use anyhow::Result;
 use lightsql::{
     btree::{BTree, SearchMode},
-    buffer::{BufferPool, BufferPoolManager},
+    buffer::{BufferPoolManager, ClockSweepBufferPool},
     disk::{DiskManager, PageId},
     tuple,
 };
 
 fn main() -> Result<()> {
     let disk = DiskManager::open("simple.lsql")?;
-    let pool = BufferPool::new(10);
+    let pool = ClockSweepBufferPool::new(10);
     let mut bufmgr = BufferPoolManager::new(disk, pool);
 
     let btree = BTree::new(PageId::new(0));

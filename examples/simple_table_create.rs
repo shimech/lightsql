@@ -1,13 +1,13 @@
 use anyhow::Result;
 use lightsql::{
-    buffer::{BufferPool, BufferPoolManager},
+    buffer::{BufferPoolManager, ClockSweepBufferPool},
     disk::{DiskManager, PageId},
     table::SimpleTable,
 };
 
 fn main() -> Result<()> {
     let disk = DiskManager::open("simple.lsql")?;
-    let pool = BufferPool::new(10);
+    let pool = ClockSweepBufferPool::new(10);
     let mut bufmgr = BufferPoolManager::new(disk, pool);
 
     let mut table = SimpleTable {
