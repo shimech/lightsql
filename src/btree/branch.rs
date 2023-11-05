@@ -29,7 +29,7 @@ impl<B: ByteSlice> Branch<B> {
         self.body.slot_count()
     }
 
-    pub fn search_slod_id(&self, key: &[u8]) -> Result<usize, usize> {
+    pub fn search_slot_id(&self, key: &[u8]) -> Result<usize, usize> {
         binary_search_by(self.pair_count(), |slot_id| {
             self.pair_at(slot_id).key.cmp(key)
         })
@@ -41,7 +41,7 @@ impl<B: ByteSlice> Branch<B> {
     }
 
     pub fn search_child_idx(&self, key: &[u8]) -> usize {
-        match self.search_slod_id(key) {
+        match self.search_slot_id(key) {
             Ok(slot_id) => slot_id + 1,
             Err(slot_id) => slot_id,
         }
@@ -108,7 +108,7 @@ impl<B: ByteSliceMut> Branch<B> {
         loop {
             if new_branch.is_half_full() {
                 let index = self
-                    .search_slod_id(new_key)
+                    .search_slot_id(new_key)
                     .expect_err("key must be unique");
                 self.insert(index, new_key, new_page_id)
                     .expect("old branch must have space");
