@@ -6,3 +6,49 @@ pub struct Frame {
     pub(crate) usage_count: u64,
     pub(crate) buffer: Rc<Buffer>,
 }
+
+impl Frame {
+    pub(crate) fn has_reference(&mut self) -> bool {
+        Rc::get_mut(&mut self.buffer).is_none()
+    }
+}
+
+#[cfg(test)]
+mod frame_test {
+    use super::*;
+
+    mod has_reference {
+        use super::*;
+
+        #[test]
+        fn 強い参照を持つ場合trueとなること() {
+            // Arrange
+            let mut frame = Frame {
+                usage_count: 0,
+                buffer: Rc::new(Buffer::default()),
+            };
+            let _clone = Rc::clone(&frame.buffer);
+
+            // Act
+            let actual = frame.has_reference();
+
+            // Assert
+            assert_eq!(actual, true)
+        }
+
+        #[test]
+        fn 参照を持たない場合falseとなること() {
+            // Arrange
+            let mut frame = Frame {
+                usage_count: 0,
+                buffer: Rc::new(Buffer::default()),
+            };
+
+            // Act
+            let actual = frame.has_reference();
+
+            // Assert
+            assert_eq!(actual, false)
+        }
+    }
+}

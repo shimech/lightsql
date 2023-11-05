@@ -1,9 +1,6 @@
 use super::BufferPool;
 use crate::buffer::{BufferId, Frame};
-use std::{
-    ops::{Index, IndexMut},
-    rc::Rc,
-};
+use std::ops::{Index, IndexMut};
 
 pub struct ClockSweepBufferPool {
     pub buffers: Vec<Frame>,
@@ -31,14 +28,14 @@ impl BufferPool for ClockSweepBufferPool {
             if frame.usage_count == 0 {
                 break self.next_victim_id;
             }
-            if Rc::get_mut(&mut frame.buffer).is_some() {
-                frame.usage_count -= 1;
-                consecutive_pinned = 0;
-            } else {
+            if frame.has_reference() {
                 consecutive_pinned += 1;
                 if consecutive_pinned >= pool_size {
                     return None;
                 }
+            } else {
+                frame.usage_count -= 1;
+                consecutive_pinned = 0;
             }
             self.update_next_victim_id();
         };
