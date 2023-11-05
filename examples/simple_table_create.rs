@@ -7,7 +7,7 @@ use lightsql::{
 
 fn main() -> Result<()> {
     let disk = DiskManager::open("simple.lsql")?;
-    let pool = ClockSweepBufferPool::new(10);
+    let pool = ClockSweepBufferPool::from(10);
     let mut bufmgr = BufferPoolManager::new(disk, pool);
 
     let mut table = SimpleTable {

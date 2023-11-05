@@ -11,15 +11,6 @@ pub struct ClockSweepBufferPool {
 }
 
 impl ClockSweepBufferPool {
-    pub fn new(pool_size: usize) -> Self {
-        let mut buffers = vec![];
-        buffers.resize_with(pool_size, Frame::default);
-        Self {
-            buffers,
-            next_victim_id: BufferId::default(),
-        }
-    }
-
     fn size(&self) -> usize {
         self.buffers.len()
     }
@@ -55,6 +46,17 @@ impl BufferPool for ClockSweepBufferPool {
     }
 }
 
+impl From<usize> for ClockSweepBufferPool {
+    fn from(pool_size: usize) -> Self {
+        let mut buffers = vec![];
+        buffers.resize_with(pool_size, Frame::default);
+        Self {
+            buffers,
+            next_victim_id: BufferId::default(),
+        }
+    }
+}
+
 impl Index<BufferId> for ClockSweepBufferPool {
     type Output = Frame;
 
@@ -73,7 +75,7 @@ impl IndexMut<BufferId> for ClockSweepBufferPool {
 mod clock_sweep_buffer_pool_test {
     use super::*;
 
-    mod new {
+    mod from {
         use super::*;
 
         #[test]
@@ -82,7 +84,7 @@ mod clock_sweep_buffer_pool_test {
             let pool_size: usize = 1024;
 
             // Act
-            let pool = ClockSweepBufferPool::new(pool_size);
+            let pool = ClockSweepBufferPool::from(pool_size);
 
             // Assert
             assert_eq!(pool.buffers.len(), pool_size)

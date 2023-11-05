@@ -101,7 +101,7 @@ mod buffer_pool_manager_test {
             let mut buffer_pool_manager = {
                 let mut disk = DiskManager::open(file_path).unwrap();
                 disk.write_page_data(page_id, &data).unwrap();
-                let pool = ClockSweepBufferPool::new(3);
+                let pool = ClockSweepBufferPool::from(3);
                 BufferPoolManager::new(disk, pool)
             };
 
@@ -140,7 +140,7 @@ mod buffer_pool_manager_test {
                         buffer: Rc::new(buffer),
                     }
                 };
-                let mut pool = ClockSweepBufferPool::new(1);
+                let mut pool = ClockSweepBufferPool::from(1);
                 pool.buffers = vec![frame];
                 BufferPoolManager::new(disk, pool)
             };
