@@ -37,7 +37,7 @@ impl BufferPoolManager {
             self.disk.read_page_data(page_id, buffer.page.get_mut())?;
             frame.reset_usage_count();
         }
-        let buffer = Rc::clone(&frame.buffer);
+        let buffer = frame.use_buffer();
         self.page_table.remove(&evict_page_id);
         self.page_table.insert(page_id, buffer_id);
         Ok(buffer)
@@ -82,9 +82,8 @@ mod buffer_pool_manager_test {
     use super::*;
 
     mod fetch_page {
-        use crate::buffer::{BufferId, ClockSweepBufferPool, Frame};
-
         use super::*;
+        use crate::buffer::{BufferId, ClockSweepBufferPool, Frame};
         use std::{
             cell::{Cell, RefCell},
             fs::remove_file,
