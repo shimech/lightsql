@@ -20,8 +20,8 @@ impl BufferPoolManager {
     pub fn fetch_page(&mut self, page_id: PageId) -> Result<Rc<Buffer>, Error> {
         if let Some(&buffer_id) = self.page_table.get(&page_id) {
             let frame = &mut self.pool[buffer_id];
-            frame.usage_count += 1;
-            return Ok(frame.buffer.clone());
+            let buffer = frame.use_buffer();
+            return Ok(buffer);
         }
         let buffer_id = self.pool.evict().ok_or(Error::NoFreeBuffer)?;
         let frame = &mut self.pool[buffer_id];
@@ -57,10 +57,9 @@ impl BufferPoolManager {
             *buffer = Buffer::default();
             buffer.page_id = page_id;
             buffer.is_dirty.set(true);
-            frame.usage_count += 1;
             page_id
         };
-        let page = Rc::clone(&frame.buffer);
+        let page = frame.use_buffer();
         self.page_table.remove(&evict_page_id);
         self.page_table.insert(page_id, buffer_id);
         Ok(page)

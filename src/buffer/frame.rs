@@ -8,6 +8,11 @@ pub struct Frame {
 }
 
 impl Frame {
+    pub(crate) fn use_buffer(&mut self) -> Rc<Buffer> {
+        self.usage_count += 1;
+        self.buffer.clone()
+    }
+
     pub(crate) fn has_reference(&mut self) -> bool {
         Rc::get_mut(&mut self.buffer).is_none()
     }
