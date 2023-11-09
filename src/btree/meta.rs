@@ -1,7 +1,7 @@
 use crate::disk::PageId;
 use zerocopy::{AsBytes, ByteSlice, FromBytes, FromZeroes, Ref};
 
-#[derive(FromBytes, FromZeroes, AsBytes)]
+#[derive(FromZeroes, FromBytes, AsBytes)]
 #[repr(C)]
 pub struct Header {
     pub root_page_id: PageId,
