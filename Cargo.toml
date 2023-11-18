@@ -11,3 +11,7 @@ bincode = "1.3.3"
 serde = {version = "1.0.188", features = ["derive"] }
 thiserror = "1.0"
 zerocopy = { version = "0.7.5", features = ["derive"] }
+
+[dev-dependencies]
+md-5 = "0.10.6"
+sha-1 = "0.10.1"
