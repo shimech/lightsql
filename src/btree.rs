@@ -41,6 +41,7 @@ pub enum Error {
     Buffer(#[from] buffer::Error),
 }
 
+#[derive(Debug, Clone)]
 pub enum SearchMode {
     Start,
     Key(Vec<u8>),
@@ -155,6 +156,7 @@ impl BTree {
                     let prev_leaf_buffer = prev_leaf_page_id
                         .map(|next_leaf_page_id| bufmgr.fetch_page(next_leaf_page_id))
                         .transpose()?;
+
                     let new_leaf_buffer = bufmgr.create_page()?;
 
                     if let Some(prev_leaf_buffer) = prev_leaf_buffer {

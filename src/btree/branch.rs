@@ -7,7 +7,7 @@ use crate::{
 use std::mem::size_of;
 use zerocopy::{AsBytes, ByteSlice, ByteSliceMut, FromBytes, FromZeroes, Ref};
 
-#[derive(FromBytes, FromZeroes, AsBytes)]
+#[derive(Debug, FromZeroes, FromBytes, AsBytes)]
 #[repr(C)]
 pub struct Header {
     right_child: PageId,
@@ -20,7 +20,7 @@ pub struct Branch<B> {
 
 impl<B: ByteSlice> Branch<B> {
     pub fn new(bytes: B) -> Self {
-        let (header, body) = Ref::new_from_prefix(bytes).expect("branch header must aligned");
+        let (header, body) = Ref::new_from_prefix(bytes).expect("branch header must be aligned");
         let body = Slotted::new(body);
         Self { header, body }
     }
@@ -121,7 +121,7 @@ impl<B: ByteSliceMut> Branch<B> {
                     .insert(new_branch.pair_count(), new_key, new_page_id)
                     .expect("new branch must have space");
                 while !new_branch.is_half_full() {
-                    self.transfer(new_branch)
+                    self.transfer(new_branch);
                 }
                 break;
             }
@@ -134,6 +134,7 @@ impl<B: ByteSliceMut> Branch<B> {
         dest.body
             .insert(next_index, self.body[0].len())
             .expect("no space in dest branch");
-        self.body.remove(0)
+        dest.body[next_index].copy_from_slice(&self.body[0]);
+        self.body.remove(0);
     }
 }

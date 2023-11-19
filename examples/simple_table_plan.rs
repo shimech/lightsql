@@ -15,7 +15,7 @@ fn main() -> Result<()> {
         cond: &|record| record[0].as_slice() == b"y",
         inner_plan: &SeqScan {
             table_meta_page_id: PageId::new(0),
-            search_mode: TupleSearchMode::Start,
+            search_mode: TupleSearchMode::Key(&[b"y"]),
             while_cond: &|_| true,
         },
     };
