@@ -33,7 +33,7 @@ fn main() -> Result<()> {
     table.insert(&mut bufmgr, &[b"y", b"Charlie", b"Williams"])?;
     table.insert(&mut bufmgr, &[b"w", b"Dave", b"Miller"])?;
     table.insert(&mut bufmgr, &[b"v", b"Eve", b"Brown"])?;
-    for i in 1u32..=1_000_000u32 {
+    for i in 1u32..=10_000_000u32 {
         dbg!(i);
         let pkey = i.to_be_bytes();
         let md5 = Md5::digest(&pkey);
