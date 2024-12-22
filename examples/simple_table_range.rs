@@ -1,5 +1,5 @@
 use anyhow::Result;
-use lightsql::{
+use oaksdb::{
     btree::{BTree, SearchMode},
     buffer::{BufferPoolManager, ClockSweepBufferPool},
     disk::{DiskManager, PageId},
@@ -7,7 +7,7 @@ use lightsql::{
 };
 
 fn main() -> Result<()> {
-    let disk = DiskManager::open("simple.lsql")?;
+    let disk = DiskManager::open("simple.odb")?;
     let pool = ClockSweepBufferPool::from(10);
     let mut bufmgr = BufferPoolManager::new(disk, pool);
 
