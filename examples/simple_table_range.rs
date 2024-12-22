@@ -1,5 +1,5 @@
 use anyhow::Result;
-use oaksdb::{
+use lightsql::{
     btree::{BTree, SearchMode},
     buffer::{BufferPoolManager, ClockSweepBufferPool},
     disk::{DiskManager, PageId},

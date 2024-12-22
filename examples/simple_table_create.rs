@@ -1,10 +1,10 @@
 use anyhow::Result;
-use md5::Md5;
-use oaksdb::{
+use lightsql::{
     buffer::{BufferPoolManager, ClockSweepBufferPool},
     disk::{DiskManager, PageId},
     table::SimpleTable,
 };
+use md5::Md5;
 use sha1::{Digest, Sha1};
 
 // CREATE TABLE
@@ -18,7 +18,7 @@ use sha1::{Digest, Sha1};
 // |...   |          |         |
 // |BE i32|md5(id)   |sha1(id) |
 fn main() -> Result<()> {
-    let disk = DiskManager::open("simple.odb")?;
+    let disk = DiskManager::open("simple.lsql")?;
     let pool = ClockSweepBufferPool::from(1_000_000);
     let mut bufmgr = BufferPoolManager::new(disk, pool);
 
